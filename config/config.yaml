@@ -1,0 +1,42 @@
+# E-Commerce Big Data Analytics Platform Configuration
+
+environment: "development"
+
+paths:
+  raw_excel: "data/raw/Online Retail.xlsx"
+  raw_csv: "data/processed/online_retail.csv"
+  processed_dir: "data/processed"
+  silver_parquet: "data/processed/silver_transactions"
+  linear_data: "data/processed/linear_customer_data"
+  logistic_data: "data/processed/logistic_customer_data"
+  streaming_events: "data/streaming/events"
+  streaming_checkpoint: "data/streaming/checkpoint"
+  results_dir: "results"
+
+kafka:
+  bootstrap_servers:
+    - "localhost:9092"
+  topic: "customer-events"
+  event_types:
+    - "view"
+    - "add_to_cart"
+    - "purchase"
+    - "cancel"
+  client_id: "ecommerce-analytics-producer"
+  consumer_group: "spark-streaming-group"
+
+spark:
+  app_name: "Ecommerce_BigData_Platform"
+  master: "local[*]"
+  log_level: "WARN"
+  shuffle_partitions: 4
+  streaming_trigger_seconds: 5
+
+ml:
+  snapshot_date: "2011-12-10"
+  cutoff_date: "2011-09-10"
+  future_end_date: "2011-12-09"
+  kmeans_k: 3
+  random_seed: 42
+  train_split: 0.8
+  test_split: 0.2

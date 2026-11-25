@@ -1,0 +1,5 @@
+Algorithm,Type,Accuracy,Precision,Recall,F1,RMSE,MAE,R2,Silhouette
+Logistic Regression,Supervised - Classification,0.6667,0.6726,0.6667,0.6609,,,,
+Linear Regression,Supervised - Regression,,,,,1204.5825,487.8073,0.5923,
+K-Means,Unsupervised - Clustering,,,,,,,,0.7133
+Hierarchical Clustering,Unsupervised - Clustering,,,,,,,,0.7138

@@ -1,0 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Data and large artifacts (Raw and checkpoints)
+data/streaming/checkpoint/
+data/streaming/events/
+data/raw/*.xlsx
+data/processed/*.csv
+data/processed/linear_customer_data/
+data/processed/logistic_customer_data/
+*.npy
+
+# Spark / Hadoop temporary files
+metastore_db/
+derby.log
+.checkpoint/
+*.crc
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Presentations and temporary scripts
+scratch/
+generate_deck.py
