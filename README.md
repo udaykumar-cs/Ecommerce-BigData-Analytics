@@ -6,56 +6,49 @@
 [![Apache Airflow](https://img.shields.io/badge/Apache%20Airflow-Orchestrated%20DAGs-017CEE.svg)](https://airflow.apache.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B.svg)](https://streamlit.io/)
 [![Docker](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED.svg)](https://www.docker.com/)
+[![Tests](https://img.shields.io/badge/Tests-5%2F5%20Passing-success.svg)](tests/)
 
-A production-style, dual-engine (Batch + Real-Time) Lakehouse platform designed to ingest, process, model, and visualize high-velocity retail transactions and live customer clickstream events at enterprise scale.
+An enterprise-grade, dual-engine (Batch + Real-Time) Lakehouse platform designed to ingest, process, model, and visualize high-velocity retail transactions and live customer clickstream events at enterprise scale.
 
 ---
 
 ## 🏛️ System Architecture
 
-```
-                                  [DATA SOURCES]
-                 ┌──────────────────────────────────────────────┐
-                 │  Historical Retail (541K Transactions)        │
-                 │  Synthetic Live Clickstream (Kafka Producer) │
-                 └──────────────────────┬───────────────────────┘
-                                        │
-           ┌────────────────────────────┴────────────────────────────┐
-           ▼                                                         ▼
-   [BATCH LAKEHOUSE]                                        [STREAMING PIPELINE]
-┌─────────────────────────┐                             ┌─────────────────────────┐
-│ PySpark Bronze ETL      │                             │ Apache Kafka Broker     │
-│ • Filter 'C' / 'A' inv. │                             │ • Topic: customer-events│
-│ • Schema Enforcement    │                             │ • Multi-partition log   │
-│ • Outlier/Null Pruning  │                             └───────────┬─────────────┘
-└──────────┬──────────────┘                                         │
-           ▼                                                        ▼
-┌─────────────────────────┐                             ┌─────────────────────────┐
-│ Silver Conformed Store  │                             │ Spark Structured Stream │
-│ • Cleaned Parquet       │                             │ • Event-time Watermark  │
-│ • Partitioned (Year/Mo) │                             │ • Schema Deserialization│
-└──────────┬──────────────┘                             │ • Checkpointed Sink     │
-           │                                            └───────────┬─────────────┘
-           ▼                                                        │
-┌─────────────────────────┐                                         │
-│ Gold Star Schema Models │                                         ▼
-│ • dim_customer (RFM)    │                             ┌─────────────────────────┐
-│ • dim_product           │                             │ Bronze Streaming Store  │
-│ • fact_sales_monthly    │                             │ • Partitioned Parquet   │
-│ • Bipartite Graph Graph │                             └───────────┬─────────────┘
-└──────────┬──────────────┘                                         │
-           │                                                        │
-           └────────────────────────────┬───────────────────────────┘
-                                        ▼
-                         [PRESENTATION & CONSUMPTION]
-                 ┌──────────────────────────────────────────────┐
-                 │ Streamlit Executive Intelligence Dashboard   │
-                 │ • Historical Sales & Revenue Trends          │
-                 │ • RFM Customer Clusters (VIP/Active/At-Risk) │
-                 │ • Model Benchmarks (Regression/Classification│
-                 │ • Customer-Product Network Graph             │
-                 │ • Real-Time Kafka Stream Event Monitor       │
-                 └──────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Ingestion ["1. Data Sources & Ingestion"]
+        A[("Raw Retail Dataset<br>541K Transactions")] --> B["PySpark Bronze ETL"]
+        K["Simulated Clickstream<br>Kafka Producer"] --> C["Kafka Topic<br>'customer-events'"]
+    end
+
+    subgraph Streaming ["2. Real-Time Streaming Engine"]
+        C --> D["Spark Structured Streaming<br>• Schema Deserialization<br>• 10-Min Event-Time Watermark"]
+        D --> E[("Bronze Event Store<br>Partitioned Parquet + Checkpoints")]
+    end
+
+    subgraph Batch ["3. Lakehouse Batch Processing"]
+        B --> F["Data Validation & Cleaning<br>• Prune 'C'/'A' Invoices<br>• Remove Nulls & Negatives"]
+        F --> G[("Silver Conformed Store<br>Partitioned by Year/Month")]
+    end
+
+    subgraph Modeling ["4. Dimensional & Graph Modeling"]
+        G --> H["Gold Star Schema Models<br>• dim_customer (RFM)<br>• dim_product<br>• fact_sales_monthly"]
+        G --> I["NetworkX Bipartite Graph<br>8,003 Nodes / 266K Edges"]
+        H --> J["Predictive AI Models<br>• Churn (Logistic Regression)<br>• CLV (Linear Regression)"]
+    end
+
+    subgraph UI ["5. Consumption & BI Layer"]
+        E --> M["Streamlit Executive Dashboard"]
+        H --> M
+        I --> M
+        J --> M
+    end
+
+    style Ingestion fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style Streaming fill:#1e293b,stroke:#2dd4bf,stroke-width:2px,color:#f8fafc
+    style Batch fill:#1e293b,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+    style Modeling fill:#1e293b,stroke:#10b981,stroke-width:2px,color:#f8fafc
+    style UI fill:#1e293b,stroke:#a855f7,stroke-width:2px,color:#f8fafc
 ```
 
 ---
@@ -71,6 +64,34 @@ A production-style, dual-engine (Batch + Real-Time) Lakehouse platform designed 
   - **CLV Spending Prediction**: PySpark Linear Regression explaining **59.23% variance ($R^2$)** in future 90-day spend.
 - **Workflow Orchestration**: Automated end-to-end DAG defined in **Apache Airflow** (`dags/ecommerce_etl_dag.py`) with retries, dependency graphs, and health checks.
 - **Single-Command Orchestration**: Unified CLI runner (`run_pipeline.py`) and Docker Compose environment (`docker-compose.yml`) for zero-friction setup.
+- **Executive Presentation Deck**: Includes an editable 13-slide widescreen deck: [`Ecommerce_BigData_Analytics_Presentation.pptx`](Ecommerce_BigData_Analytics_Presentation.pptx).
+
+---
+
+## 📊 Analytical Visualizations & Graph Intelligence
+
+| Bipartite Customer-Product Network Graph | Hierarchical Ward Linkage Dendrogram |
+|:---:|:---:|
+| ![Customer-Product Network Graph](results/customer_product_graph.png) | ![Hierarchical Clustering Dendrogram](results/hierarchical_dendrogram.png) |
+| **8,003 Nodes & 266,792 Edges**: Blue nodes represent customers; orange nodes represent products; edge weights reflect purchased volume to identify purchase hubs and affinity bundles. | **Silhouette Score: 0.7138 (k=3)**: Validates clean separation into 3 distinct cohorts: VIP Whales (£111K+ avg spend), Active Shoppers, and At-Risk Dormant buyers. |
+
+---
+
+## 🗄️ Medallion Data Modeling (Star Schema)
+
+The batch ETL pipeline transforms raw data through three structured layers:
+
+### 1. Silver Conformed Layer (`data/processed/silver_transactions/`)
+- **Format**: Apache Parquet (Snappy-compressed), partitioned by `Year` and `Month`.
+- **Invariants**: Excludes cancelled orders (`InvoiceNo` starting with `'C'`), bad debts (`'A'`), `Quantity <= 0`, `UnitPrice <= 0`, and null `CustomerID`s.
+
+### 2. Gold Dimensional Models
+- **`dim_customer`** (`data/processed/gold_dim_customer/`):
+  - `CustomerID`, `LastPurchaseDate`, `Recency` (days since snapshot), `Frequency` (distinct invoices), `Monetary` (total revenue), `TotalQuantityPurchased`, `PrimaryCountry`.
+- **`dim_product`** (`data/processed/gold_dim_product/`):
+  - `StockCode`, `Description`, `TotalUnitsSold`, `TotalProductRevenue`, `TotalOrdersAppearedIn`.
+- **`fact_sales_monthly`**:
+  - `Year`, `Month`, `Country`, `MonthlyRevenue`, `MonthlyUnitsSold`, `TotalInvoices`.
 
 ---
 
@@ -100,9 +121,9 @@ Ecommerce-BigData-Analytics/
 ├── dashboard/
 │   └── app.py                      # Multi-tab Streamlit Executive Dashboard
 ├── data/
-│   ├── raw/                        # Ingestion raw datasets (Online Retail.xlsx)
-│   ├── processed/                  # Silver & Gold conformed Parquet tables
-│   └── streaming/                  # Parquet streaming sink & write-ahead checkpoint logs
+│   ├── raw/                        # Ingestion raw datasets (.gitkeep)
+│   ├── processed/                  # Silver & Gold conformed Parquet tables (.gitkeep)
+│   └── streaming/                  # Parquet streaming sink & write-ahead checkpoint logs (.gitkeep)
 ├── docker-compose.yml              # Local Kafka, Zookeeper & Kafka UI orchestration
 ├── graph/
 │   └── customer_product_graph.py   # Bipartite network graph generation & centrality
@@ -127,6 +148,7 @@ Ecommerce-BigData-Analytics/
 ├── utils/
 │   └── logger.py                   # Centralized structured logging formatter
 ├── run_pipeline.py                 # Unified master CLI orchestrator
+├── Ecommerce_BigData_Analytics_Presentation.pptx  # 13-slide presentation deck
 ├── requirements.txt                # Pinned Python dependencies
 └── README.md                       # Documentation & Architecture Overview
 ```
@@ -138,7 +160,7 @@ Ecommerce-BigData-Analytics/
 ### 1. Environment Setup
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/Ecommerce-BigData-Analytics.git
+git clone https://github.com/udaykumar-cs/Ecommerce-BigData-Analytics.git
 cd Ecommerce-BigData-Analytics
 
 # Create and activate virtual environment
@@ -162,7 +184,7 @@ docker compose up -d
 The repository includes `run_pipeline.py` to trigger individual or end-to-end components:
 
 ```bash
-# Run automated data quality and invariant tests
+# Run automated data quality and invariant tests (5/5 passing)
 python run_pipeline.py --step test
 
 # Execute PySpark Medallion ETL pipeline (Bronze -> Silver -> Gold)
@@ -186,6 +208,18 @@ python run_pipeline.py --step dashboard
 
 ---
 
+## 🧠 Architectural Decisions & Engineering Trade-Offs
+
+| Decision | Alternative Considered | Why This Choice Was Made |
+|---|---|---|
+| **Apache Spark over Pandas** | Single-node Pandas | Pandas requires entire datasets to fit in RAM and lacks distributed execution. PySpark enables Catalyst query optimization, distributed joins, and scales horizontally to tens of millions of records. |
+| **Apache Parquet over CSV** | Flat CSV / JSON | Parquet uses columnar storage with dictionary encoding and Snappy compression, enabling **predicate pushdown** (skipping unneeded column reads) and reducing disk footprint by >70%. |
+| **Spark Structured Streaming over DStreams** | Legacy RDD DStreams | Structured Streaming is built directly on the Spark SQL catalyst engine, providing unified APIs for batch and streaming, native event-time watermarking, and write-ahead metadata checkpointing for fault-tolerant state recovery. |
+| **10-Minute Watermarking** | Drop late events | Real-world clickstream networks experience network latency and client retransmits. A 10-minute watermark bounds state memory while allowing delayed messages to merge seamlessly. |
+| **Medallion Lakehouse Architecture** | Single monolithic table | Decouples raw immutable ingest (Bronze) from conformed business entities (Silver) and aggregated serving layers (Gold), preventing pipeline re-runs from corrupting historical data. |
+
+---
+
 ## 🧪 Data Invariants & Quality Rules
 
 1. **Transaction Validity**: Records with invoice numbers starting with `'C'` (cancellations) or `'A'` (bad debts) are systematically filtered out of revenue metrics.
@@ -198,3 +232,4 @@ python run_pipeline.py --step dashboard
 ## 🔮 Future Roadmap
 - **Delta Lake Integration**: Migrate Parquet storage to Delta Lake for ACID transactions, schema enforcement, and time-travel querying.
 - **Cloud Scale**: Deploy Kafka onto **Amazon MSK** and PySpark jobs onto **Databricks / AWS EMR**.
+- **Generative AI Copilot**: Integrate an LLM agent within Streamlit to query retail metrics in natural language.
